@@ -53,15 +53,14 @@ class PlanFixBase(object):
         if not self.sid:
             self.auth()
 
-    def scheme_sort(self, a, b):
-        tmp_a = a.keys()[0] if isinstance(a, dict) else a
-        tmp_b = b.keys()[0] if isinstance(b, dict) else b
-        if tmp_a == tmp_b:
-            return 0
-        if tmp_a > tmp_b:
-            return 1
+    def scheme_sort(self, a):
+        print('scheme_sort')
+        if isinstance(a, dict):
+            for i in a.keys():
+                a[i] = sorted(a[i], key=self.scheme_sort)
+                return i
         else:
-            return -1
+            return a
 
     def get_sign(self, **kwargs):
         params_list = self.method + \
@@ -70,35 +69,31 @@ class PlanFixBase(object):
         self.sign = md5(params_list.encode('utf-8')).hexdigest()
 
     def string_by_schemefileds(self, element, **kwargs):
+        print('string_by_schemefileds')
         result_list = []
         element = list(element)
-        # sorted(element,key=cmp_to_key(self.scheme_sort))
-        element.sort()
+        element.sort(key=self.scheme_sort)
+
         for item in element:
             if not isinstance(item, dict):
-                tmp_item = self.get_value(item,)
-                result_list.append(self.get_value(item, **kwargs))
+                result_list.append(kwargs.get(item, ''))
             else:
-                tmp_key, tmp_val = item.items()[0]
-                if not isinstance(tmp_val, list):
-                    if tmp_val == 'id':
-                        result_list.append(self.get_value(tmp_key, **kwargs))
-                    elif tmp_val == 'customValue':
-                        res = self.get_value(tmp_key, **kwargs)
-                        if not res == '' and isinstance(res, list):
-                            result_list.append(
-                                "".join(["".join([str(i[0]), str(i[1])]) for i in res]))
+                for tmp_key in item.keys():
+                    tmp_val = item[tmp_key]
+                    if not isinstance(tmp_val, list):
+                        if tmp_val == 'id':
+                            result_list.append(kwargs.get(tmp_key, ''))
+                        elif tmp_val == 'customValue':
+                            res = kwargs.get(tmp_key, '')
+                            if not res == '' and isinstance(res, list):
+                                result_list.append(
+                                    "".join(["".join([str(i[0]), str(i[1])]) for i in res]))
+                        else:
+                            result_list.append(kwargs.get(tmp_val, ''))
                     else:
-                        result_list.append(self.get_value(tmp_val, **kwargs))
-                else:
-                    result_list.append(
-                        self.string_by_schemefileds(tmp_val, **kwargs))
+                        result_list.append(
+                            self.string_by_schemefileds(tmp_val, **kwargs))
         return "".join(result_list)
-
-    def get_value(self, value, **kwargs):
-        if value in kwargs:
-            return kwargs.get(value)
-        return ''
 
     def create_xml_by_scheme(self, element, **kwargs):
         result = ""
@@ -106,28 +101,28 @@ class PlanFixBase(object):
         custom_data_template = "<id>%s</id><value>%s</value>"
         for item in element:
             if not isinstance(item, dict):
-                result += template % (item,
-                                      self.get_value(item, **kwargs), item)
+                result += template % (item, kwargs.get(item, ''), item)
             else:
-                tmp_key, tmp_val = item.items()[0]
-                if not isinstance(tmp_val, list):
-                    if tmp_val == 'id':
-                        sub_result = template % (
-                            tmp_val, self.get_value(tmp_key, **kwargs), tmp_val)
-                    elif tmp_val == 'customValue':
-                        res = self.get_value(tmp_key, **kwargs)
-                        if not res == '' and isinstance(res, list):
-                            sub_result = "".join(
-                                [template % (tmp_val, (custom_data_template % i), tmp_val) for i in res])
+                for tmp_key in item.keys():
+                    tmp_val = item[tmp_key]
+                    if not isinstance(tmp_val, list):
+                        if tmp_val == 'id':
+                            sub_result = template % (tmp_val, kwargs.get(tmp_key, ''), tmp_val)
+                        elif tmp_val == 'customValue':
+                            res = kwargs.get(tmp_key, '')
+                            if not res == '' and isinstance(res, list):
+                                sub_result = "".join(
+                                    [template % (tmp_val, (custom_data_template % i), tmp_val) for i in res])
+                        else:
+                            sub_result = template % (
+                                tmp_val, kwargs.get(tmp_key, ''), tmp_val)
                     else:
-                        sub_result = template % (
-                            tmp_val, self.get_value(tmp_key, **kwargs), tmp_val)
-                else:
-                    sub_result = self.create_xml_by_scheme(tmp_val, **kwargs)
-                result += template % (tmp_key, sub_result, tmp_key)
+                        sub_result = self.create_xml_by_scheme(tmp_val, **kwargs)
+                    result += template % (tmp_key, sub_result, tmp_key)
         return result
 
     def connect(self, **kwargs):
+        print('connect')
         if not 'sid' in kwargs and self.sid:
             kwargs['sid'] = self.sid
         self.get_sign(**kwargs)

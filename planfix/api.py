@@ -1,9 +1,9 @@
-from .classes import PlanFixBase
+from classes import PlanFixBase
 from xml.etree import ElementTree
-
+from collections import OrderedDict
 
 class PlanFix(PlanFixBase):
-    def add_task(self, *args, **kwargs):
+    def task_add(self, *args, **kwargs):
         self.method = "task.add"
         self.scheme = ['account',
                        'sid',
@@ -83,7 +83,8 @@ class PlanFix(PlanFixBase):
         self.method = 'contact.get'
         self.scheme = ['account',
                        'sid',
-                       {'contact': ['id', 'general']}]
+                       {'contact': ['id', 'general']}
+                       ]
         try:
             response = ElementTree.fromstring(self.connect(**kwargs))
             return response.find('contact').find('userid').text
@@ -120,8 +121,10 @@ class PlanFix(PlanFixBase):
             response = ElementTree.fromstring(self.connect(**kwargs))
             return response.find('contact').find('userid').text
         except AttributeError as e:
-            if e.message == '8007':
-                return self.contact_get_list(search=kwargs['email'])[0][0]
+            pass
+            # E-mail, указанный для логина, не уникален
+            # if 'message' in e and e.message == '8007':
+            #     return self.contact_get_list(search=kwargs['email'])[0][0]
 
     def task_get_list(self, target='template'):
         result = []
@@ -137,6 +140,26 @@ class PlanFix(PlanFixBase):
             rt = response.find('tasks')
             for item in rt:
                 result.append((item.find('id').text, item.find('title').text))
+            return result
+        except AttributeError as e:
+            return None
+
+    def task_get_list_of_status(self, *args, **kwargs):
+        result = []
+        self.method = 'taskStatus.getListOfSet'
+        self.custom_scheme = []
+        self.scheme = ['account',
+                       'sid',
+                       {'taskStatusSet': ['id']}
+                       ]
+        params = {'account': self.account,
+                  'sid': self.sid}
+        params.update(kwargs)
+        try:
+            response = ElementTree.fromstring(self.connect(**params))
+            rt = response.find('taskStatuses')
+            for item in rt:
+                result.append((item.find('id').text, item.find('name').text))
             return result
         except AttributeError as e:
             return None
