@@ -4,6 +4,9 @@ from collections import OrderedDict
 
 class PlanFix(PlanFixBase):
     def task_add(self, *args, **kwargs):
+        """
+        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_task.add
+        """
         self.method = "task.add"
         self.scheme = ['account',
                        'sid',
@@ -33,11 +36,10 @@ class PlanFix(PlanFixBase):
         except AttributeError as e:
             return None
 
-    def change_status_task(self, id, status):
-        self.method = ""
-        self.scheme = []
-
     def project_get_list(self, cur_page=1, target='all'):
+        """
+        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_project.getList
+        """
         result = []
         if not str(cur_page).isdigit():
             cur_page = 1
@@ -57,6 +59,9 @@ class PlanFix(PlanFixBase):
             return None
 
     def contact_get_list(self, cur_page=1, search=''):
+        """
+        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_contact.getList
+        """
         result = []
         if not str(cur_page).isdigit():
             cur_page = 1
@@ -79,6 +84,9 @@ class PlanFix(PlanFixBase):
             return None
 
     def contact_get(self, **kwargs):
+        """
+        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_contact.get
+        """
         result = []
         self.method = 'contact.get'
         self.scheme = ['account',
@@ -92,6 +100,9 @@ class PlanFix(PlanFixBase):
             return None
 
     def contact_add(self, **kwargs):
+        """
+        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_contact.add
+        """
         result = []
         self.method = 'contact.add'
         self.scheme = ['account',
@@ -127,6 +138,9 @@ class PlanFix(PlanFixBase):
             #     return self.contact_get_list(search=kwargs['email'])[0][0]
 
     def task_get_list(self, target='template'):
+        """
+        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_task.getList
+        """
         result = []
         self.method = 'task.getList'
         self.custom_scheme = []
@@ -145,6 +159,9 @@ class PlanFix(PlanFixBase):
             return None
 
     def task_get_list_of_status(self, *args, **kwargs):
+        """
+        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_taskStatus.getListOfSet
+        """
         result = []
         self.method = 'taskStatus.getListOfSet'
         self.custom_scheme = []
@@ -155,11 +172,35 @@ class PlanFix(PlanFixBase):
         params = {'account': self.account,
                   'sid': self.sid}
         params.update(kwargs)
+        # print(params)
         try:
             response = ElementTree.fromstring(self.connect(**params))
             rt = response.find('taskStatuses')
             for item in rt:
                 result.append((item.find('id').text, item.find('name').text))
             return result
+        except AttributeError as e:
+            return None
+
+    def task_change_status(self, id, status):
+        """
+        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_task.changeStatus
+        """
+        self.method = 'task.changeStatus'
+        self.custom_scheme = []
+        self.scheme = ['account',
+                       'sid',
+                       {'task': ['id', 'general']},
+                       'status',
+                       'dateTime',
+                       ]
+        params = {'account': self.account,
+                  'sid': self.sid,
+                  'id': id,
+                  'status': status
+                  }
+        try:
+            response = ElementTree.fromstring(self.connect(**params))
+            return response.find('task').find('id').text
         except AttributeError as e:
             return None

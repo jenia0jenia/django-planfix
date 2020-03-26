@@ -1,7 +1,7 @@
 import requests
 from hashlib import md5
 from xml.etree import ElementTree
-from django.core.cache import cache
+# from django.core.cache import cache
 from functools import cmp_to_key
 # class Cache(object):
 #     params = {}
@@ -20,7 +20,7 @@ from functools import cmp_to_key
 
 
 class PlanFixBase(object):
-    CACHE_TIMELIFE = 20
+    # CACHE_TIMELIFE = 20
     request_templ = """<?xml version="1.0" encoding="UTF-8"?>
         <request method="{}">
           {}
@@ -44,7 +44,7 @@ class PlanFixBase(object):
     debug = None
 
     def __init__(self, *args, **kwargs):
-        self.sid = cache.get('planfix_sid')
+        # self.sid = cache.get('planfix_sid')
         attr_list = [i.__str__() for i in dir(self) if not i.startswith('__')]
         if kwargs:
             for item in kwargs.keys():
@@ -54,22 +54,23 @@ class PlanFixBase(object):
             self.auth()
 
     def scheme_sort(self, a):
-        print('scheme_sort')
+        # print('scheme_sort')
         if isinstance(a, dict):
             for i in a.keys():
-                a[i] = sorted(a[i], key=self.scheme_sort)
+                # a[i] = sorted(a[i], key=self.scheme_sort)
                 return i
         else:
             return a
 
     def get_sign(self, **kwargs):
+        # print('get_sign')
         params_list = self.method + \
             self.string_by_schemefileds(
                 self.scheme, **kwargs) + self.private_key
         self.sign = md5(params_list.encode('utf-8')).hexdigest()
 
     def string_by_schemefileds(self, element, **kwargs):
-        print('string_by_schemefileds')
+        # print('string_by_schemefileds')
         result_list = []
         element = list(element)
         element.sort(key=self.scheme_sort)
@@ -130,7 +131,11 @@ class PlanFixBase(object):
         self.print_debug(body)
         data = self.request_templ.format(
             self.method, body.encode('utf-8'), self.sign)
+        # print(self.request_templ)
+        # print(data)
         r = requests.post(self.host, data=data, auth=(self.api_key, ""))
+        print('requests')
+        print(r.text)
         if self.method != 'auth.login':
             if self.is_session_valid(r.content):
                 self.print_debug(r.content)
@@ -161,7 +166,7 @@ class PlanFixBase(object):
             response = ElementTree.fromstring(self.connect(**params))
             res = response.find('sid')
             self.sid = res.text
-            cache.set('planfix_sid', self.sid, self.CACHE_TIMELIFE*60)
+            # cache.set('planfix_sid', self.sid, self.CACHE_TIMELIFE*60)
 
     def print_debug(self, msg):
         if hasattr(self.debug, '__call__'):

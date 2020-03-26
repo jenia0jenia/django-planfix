@@ -1,6 +1,11 @@
 from django.db import models
+from django.contrib.auth.models import User
 
-
-class PlanfixContacts(models.Model):
-    id_contact = models.IntegerField()
-    email = models.CharField(max_length=254, null=True, blank=True)
+class PlanfixModel(models.Model):
+    contact_id = models.IntegerField(null=True, blank=True)
+    task_id = models.IntegerField(null=True, blank=True)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='User',
+    )
