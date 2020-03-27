@@ -1,8 +1,10 @@
+# Planfix api - https://planfix.ru/docs/
+
 import requests
 from hashlib import md5
 from xml.etree import ElementTree
-# from django.core.cache import cache
-from functools import cmp_to_key
+from django.core.cache import cache
+
 # class Cache(object):
 #     params = {}
 #
@@ -19,8 +21,21 @@ from functools import cmp_to_key
 # cache = Cache()
 
 
+class PlanfixError(Exception):
+    """Exception raised for errors in the PLANFIX requests.
+
+    Attributes:
+        code -- planfix error code
+        message -- explanation of the error
+    """
+
+    def __init__(self, code='', message=''):
+        self.code = code
+        self.message = message
+
+
 class PlanFixBase(object):
-    # CACHE_TIMELIFE = 20
+    CACHE_TIMELIFE = 20
     request_templ = """<?xml version="1.0" encoding="UTF-8"?>
         <request method="{}">
           {}
@@ -44,7 +59,7 @@ class PlanFixBase(object):
     debug = None
 
     def __init__(self, *args, **kwargs):
-        # self.sid = cache.get('planfix_sid')
+        self.sid = cache.get('planfix_sid')
         attr_list = [i.__str__() for i in dir(self) if not i.startswith('__')]
         if kwargs:
             for item in kwargs.keys():
@@ -73,6 +88,8 @@ class PlanFixBase(object):
         # print('string_by_schemefileds')
         result_list = []
         element = list(element)
+        # print('element')
+        # print(element)
         element.sort(key=self.scheme_sort)
 
         for item in element:
@@ -123,28 +140,27 @@ class PlanFixBase(object):
         return result
 
     def connect(self, **kwargs):
-        print('connect')
+        # print('connect')
         if not 'sid' in kwargs and self.sid:
             kwargs['sid'] = self.sid
         self.get_sign(**kwargs)
         body = self.create_xml_by_scheme(self.scheme, **kwargs)
         self.print_debug(body)
         data = self.request_templ.format(
-            self.method, body.encode('utf-8'), self.sign)
-        # print(self.request_templ)
-        # print(data)
+            self.method, body, self.sign).encode('utf-8')
         r = requests.post(self.host, data=data, auth=(self.api_key, ""))
-        print('requests')
-        print(r.text)
+        # print('requests')
+        # print(r.content)
+
+        if not self.is_session_valid(r.content):
+            self.print_debug(r.content)
+            return r.content
+
         if self.method != 'auth.login':
-            if self.is_session_valid(r.content):
-                self.print_debug(r.content)
-                return r.content
-            else:
-                tmp_params = dict(method=self.method, scheme=self.scheme)
-                self.auth(renew=True)
-                self.scheme, self.method = tmp_params['scheme'], tmp_params['method']
-                return self.connect(**kwargs)
+            tmp_params = dict(method=self.method, scheme=self.scheme)
+            self.auth(renew=True)
+            self.scheme, self.method = tmp_params['scheme'], tmp_params['method']
+            return self.connect(**kwargs)
         else:
             return r.content
 
@@ -156,17 +172,21 @@ class PlanFixBase(object):
             if response.find('code').text == '0005':
                 return False
             else:
-                raise AttributeError(response.find('code').text)
+                raise PlanfixError(response.find('code').text, response.find('message').text)
 
     def auth(self, renew=False):
         if renew or self.sid == None:
             self.method = 'auth.login'
             self.scheme = ['account', 'login', 'password']
             params = {'account': self.account, 'login': self.user, 'password': self.password}
-            response = ElementTree.fromstring(self.connect(**params))
-            res = response.find('sid')
-            self.sid = res.text
-            # cache.set('planfix_sid', self.sid, self.CACHE_TIMELIFE*60)
+            response = self.connect(**params)
+            if self.is_session_valid(response):
+                root = ElementTree.fromstring(response)
+                res = root.find('sid')
+                self.sid = res.text
+                cache.set('planfix_sid', self.sid, self.CACHE_TIMELIFE*60)
+            else:
+                return False
 
     def print_debug(self, msg):
         if hasattr(self.debug, '__call__'):

@@ -1,4 +1,4 @@
-from classes import PlanFixBase
+from .classes import PlanFixBase, PlanfixError
 from xml.etree import ElementTree
 from collections import OrderedDict
 
@@ -33,7 +33,7 @@ class PlanFix(PlanFixBase):
         try:
             response = ElementTree.fromstring(self.connect(**kwargs))
             return response.find('task').find("id").text
-        except AttributeError as e:
+        except PlanfixError as e:
             return None
 
     def project_get_list(self, cur_page=1, target='all'):
@@ -55,7 +55,7 @@ class PlanFix(PlanFixBase):
             for item in rt:
                 result.append((item.find('id').text, item.find('title').text))
             return result
-        except AttributeError as e:
+        except PlanfixError as e:
             return None
 
     def contact_get_list(self, cur_page=1, search=''):
@@ -80,7 +80,7 @@ class PlanFix(PlanFixBase):
                 result.append((item.find('userid').text,
                                item.find('email').text))
             return result
-        except AttributeError as e:
+        except PlanfixError as e:
             return None
 
     def contact_get(self, **kwargs):
@@ -96,7 +96,7 @@ class PlanFix(PlanFixBase):
         try:
             response = ElementTree.fromstring(self.connect(**kwargs))
             return response.find('contact').find('userid').text
-        except AttributeError as e:
+        except PlanfixError as e:
             return None
 
     def contact_add(self, **kwargs):
@@ -120,6 +120,7 @@ class PlanFix(PlanFixBase):
                                     'sex',
                                     'skype',
                                     'icq',
+                                    'vk',
                                     'birthdate',
                                     'lang',
                                     'isCompany',
@@ -131,11 +132,12 @@ class PlanFix(PlanFixBase):
         try:
             response = ElementTree.fromstring(self.connect(**kwargs))
             return response.find('contact').find('userid').text
-        except AttributeError as e:
-            pass
+        except PlanfixError as e:
             # E-mail, указанный для логина, не уникален
-            # if 'message' in e and e.message == '8007':
-            #     return self.contact_get_list(search=kwargs['email'])[0][0]
+            if e.message == '8007':
+                # print(e.message)
+                # print(e.code)
+                return self.contact_get_list(search=kwargs['email'])[0][0]
 
     def task_get_list(self, target='template'):
         """
@@ -155,7 +157,7 @@ class PlanFix(PlanFixBase):
             for item in rt:
                 result.append((item.find('id').text, item.find('title').text))
             return result
-        except AttributeError as e:
+        except PlanfixError as e:
             return None
 
     def task_get_list_of_status(self, *args, **kwargs):
@@ -179,7 +181,7 @@ class PlanFix(PlanFixBase):
             for item in rt:
                 result.append((item.find('id').text, item.find('name').text))
             return result
-        except AttributeError as e:
+        except PlanfixError as e:
             return None
 
     def task_change_status(self, id, status):
@@ -202,5 +204,5 @@ class PlanFix(PlanFixBase):
         try:
             response = ElementTree.fromstring(self.connect(**params))
             return response.find('task').find('id').text
-        except AttributeError as e:
+        except PlanfixError as e:
             return None
