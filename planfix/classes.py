@@ -96,47 +96,46 @@ class PlanFixBase(object):
             if not isinstance(item, dict):
                 result_list.append(kwargs.get(item, ''))
             else:
-                for tmp_key in item.keys():
-                    tmp_val = item[tmp_key]
-                    if not isinstance(tmp_val, list):
-                        if tmp_val == 'id':
-                            result_list.append(kwargs.get(tmp_key, ''))
-                        elif tmp_val == 'customValue':
-                            res = kwargs.get(tmp_key, '')
+                for key, val in item.items():
+                    if not isinstance(val, list):
+                        if val == 'id':
+                            result_list.append(kwargs.get(key, ''))
+                        elif val == 'customValue':
+                            res = kwargs.get(key, '')
                             if not res == '' and isinstance(res, list):
-                                result_list.append(
-                                    "".join(["".join([str(i[0]), str(i[1])]) for i in res]))
+                                result_list.append(str(res[0]) + str(res[1]))
                         else:
-                            result_list.append(kwargs.get(tmp_val, ''))
+                            result_list.append(kwargs.get(val, ''))
                     else:
                         result_list.append(
-                            self.string_by_schemefileds(tmp_val, **kwargs))
+                            self.string_by_schemefileds(val, **kwargs))
         return "".join(result_list)
 
     def create_xml_by_scheme(self, element, **kwargs):
         result = ""
         template = "<%s>%s</%s>"
         custom_data_template = "<id>%s</id><value>%s</value>"
+        sub_result = ''
         for item in element:
             if not isinstance(item, dict):
-                result += template % (item, kwargs.get(item, ''), item)
+                if not kwargs.get(item, None) is None:
+                    result += template % (item, kwargs.get(item, ''), item)
             else:
-                for tmp_key in item.keys():
-                    tmp_val = item[tmp_key]
-                    if not isinstance(tmp_val, list):
-                        if tmp_val == 'id':
-                            sub_result = template % (tmp_val, kwargs.get(tmp_key, ''), tmp_val)
-                        elif tmp_val == 'customValue':
-                            res = kwargs.get(tmp_key, '')
-                            if not res == '' and isinstance(res, list):
-                                sub_result = "".join(
-                                    [template % (tmp_val, (custom_data_template % i), tmp_val) for i in res])
-                        else:
-                            sub_result = template % (
-                                tmp_val, kwargs.get(tmp_key, ''), tmp_val)
+                for key, val in item.items():
+                    if not isinstance(val, list):
+                        kw_val = kwargs.get(key)
+                        if not kw_val is None:
+                            if val == 'id':
+                                sub_result = template % (val, kw_val, val)
+                            elif val == 'customValue':
+                                if isinstance(kw_val, list):
+                                    sub_result = template % \
+                                        (val, (custom_data_template % (kw_val[0], kw_val[1])), val)
+                            else:
+                                sub_result = template % (val, kw_val, val)
                     else:
-                        sub_result = self.create_xml_by_scheme(tmp_val, **kwargs)
-                    result += template % (tmp_key, sub_result, tmp_key)
+                        sub_result = self.create_xml_by_scheme(val, **kwargs)
+                    result += template % (key, sub_result, key)
         return result
 
     def connect(self, **kwargs):
@@ -149,20 +148,19 @@ class PlanFixBase(object):
         data = self.request_templ.format(
             self.method, body, self.sign).encode('utf-8')
         r = requests.post(self.host, data=data, auth=(self.api_key, ""))
+        content = r.content.decode()
         # print('requests')
-        # print(r.content)
+        # print(content)
 
-        if not self.is_session_valid(r.content):
-            self.print_debug(r.content)
-            return r.content
+        self.print_debug(content)
 
-        if self.method != 'auth.login':
+        if self.is_session_valid(content):
+            return content
+        elif self.method != 'auth.login':
             tmp_params = dict(method=self.method, scheme=self.scheme)
             self.auth(renew=True)
             self.scheme, self.method = tmp_params['scheme'], tmp_params['method']
             return self.connect(**kwargs)
-        else:
-            return r.content
 
     def is_session_valid(self, res):
         response = ElementTree.fromstring(res)
