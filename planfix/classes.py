@@ -69,7 +69,6 @@ class PlanFixBase(object):
             self.auth()
 
     def scheme_sort(self, a):
-        # print('scheme_sort')
         if isinstance(a, dict):
             for i in a.keys():
                 # a[i] = sorted(a[i], key=self.scheme_sort)
@@ -78,18 +77,14 @@ class PlanFixBase(object):
             return a
 
     def get_sign(self, **kwargs):
-        # print('get_sign')
         params_list = self.method + \
             self.string_by_schemefileds(
                 self.scheme, **kwargs) + self.private_key
         self.sign = md5(params_list.encode('utf-8')).hexdigest()
 
     def string_by_schemefileds(self, element, **kwargs):
-        # print('string_by_schemefileds')
         result_list = []
         element = list(element)
-        # print('element')
-        # print(element)
         element.sort(key=self.scheme_sort)
 
         for item in element:
@@ -139,7 +134,6 @@ class PlanFixBase(object):
         return result
 
     def connect(self, **kwargs):
-        # print('connect')
         if not 'sid' in kwargs and self.sid:
             kwargs['sid'] = self.sid
         self.get_sign(**kwargs)
@@ -149,8 +143,6 @@ class PlanFixBase(object):
             self.method, body, self.sign).encode('utf-8')
         r = requests.post(self.host, data=data, auth=(self.api_key, ""))
         content = r.content.decode()
-        # print('requests')
-        # print(content)
 
         self.print_debug(content)
 
