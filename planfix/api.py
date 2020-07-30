@@ -325,3 +325,42 @@ class PlanFix(PlanFixBase):
             return result
         except PlanfixError as e:
             return None
+
+
+    def analitic_get_group_list(self):
+        """
+        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_analitic.getGroupList
+        """
+        self.method = 'analitic.getGroupList'
+        self.scheme = {'account', 'sid'}
+        params = {'account': self.account,
+                  'sid': self.sid,}
+        try:
+            response = ElementTree.fromstring(self.connect(**params))
+            rt = response.find('analiticGroups')
+            count_groups = rt.attrib['count']
+            total = rt.attrib['totalCount']
+
+            return [(item.find('id').text, item.find('name').text) for item in rt]
+        except PlanfixError as e:
+            return None
+
+
+    def analitic_get_list(self, groupId):
+        """
+        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_analitic.getList
+        """
+        self.method = 'analitic.getList'
+        self.scheme = {'account', 'sid'}
+        params = {'account': self.account,
+                  'analiticGroup': groupId,
+                  'sid': self.sid,}
+        try:
+            response = ElementTree.fromstring(self.connect(**params))
+            rt = response.find('analitics')
+            count_groups = rt.attrib['count']
+            total = rt.attrib['totalCount']
+
+            return [(item.find('id').text, item.find('name').text) for item in rt]
+        except PlanfixError as e:
+            return None
