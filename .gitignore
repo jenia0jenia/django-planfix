@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Sublime project
+*.sublime-*
+
 # C extensions
 *.so
 

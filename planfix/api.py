@@ -289,7 +289,7 @@ class PlanFix(PlanFixBase):
         except PlanfixError as e:
             return None
 
-    def handbook_get_records(self, handbook):
+    def handbook_get_records(self, handbook, *args, **kwargs):
         """
         https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_handbook.getList
         """
@@ -303,7 +303,18 @@ class PlanFix(PlanFixBase):
                        ]
         params = {'account': self.account,
                   'sid': self.sid,
-                  'handbook': handbook}
+                  'handbook': handbook,
+                  }
+
+        if "parentKey" in kwargs:
+            params["parentKey"] = kwargs["parentKey"]
+
+        if "pageCurrent" in kwargs:
+            params["pageCurrent"] = kwargs["pageCurrent"]
+
+        if "pageSize" in kwargs:
+            params["pageSize"] = kwargs["pageSize"]
+
         try:
             response = ElementTree.fromstring(self.connect(**params))
             rt = response.find('records')
