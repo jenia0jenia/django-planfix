@@ -1,13 +1,15 @@
 from .classes import PlanFixBase, PlanfixError
+from .utils import parse_xml_recursively
 from xml.etree import ElementTree
 from collections import OrderedDict
 
 class PlanFix(PlanFixBase):
 
+    """
+    https://planfix.ru/docs/%D0%A1%D0%BF%D0%B8%D1%81%D0%BE%D0%BA_%D1%84%D1%83%D0%BD%D0%BA%D1%86%D0%B8%D0%B9
+    """
+
     def project_get_list(self, cur_page=1, target='all'):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_project.getList
-        """
         if not str(cur_page).isdigit():
             cur_page = 1
         self.method = 'project.getList'
@@ -24,9 +26,6 @@ class PlanFix(PlanFixBase):
             return None
 
     def contact_get_list(self, cur_page=1, search=''):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_contact.getList
-        """
         if not str(cur_page).isdigit():
             cur_page = 1
         self.method = 'contact.getList'
@@ -45,14 +44,11 @@ class PlanFix(PlanFixBase):
             return None
 
     def contact_get(self, **kwargs):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_contact.get
-        """
         self.method = 'contact.get'
         self.scheme = ['account',
                        'sid',
                        {'contact': ['id', 'general']}
-                       ]
+                      ]
         try:
             response = ElementTree.fromstring(self.connect(**kwargs))
             return response.find('contact').find('userid').text
@@ -60,9 +56,6 @@ class PlanFix(PlanFixBase):
             return None
 
     def contact_add(self, **kwargs):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_contact.add
-        """
         self.method = 'contact.add'
         self.scheme = ['account',
                        'sid',
@@ -97,9 +90,6 @@ class PlanFix(PlanFixBase):
                 return self.contact_get_list(search=kwargs['email'])[0][0]
 
     def task_get_list(self, target='template'):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_task.getList
-        """
         self.method = 'task.getList'
         self.custom_scheme = []
         self.scheme = {'account', 'sid', 'target', 'pageCurrent'}
@@ -115,9 +105,6 @@ class PlanFix(PlanFixBase):
             return None
 
     def task_get_list_of_status(self, *args, **kwargs):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_taskStatus.getListOfSet
-        """
         self.method = 'taskStatus.getListOfSet'
         self.custom_scheme = []
         self.scheme = ['account',
@@ -135,9 +122,6 @@ class PlanFix(PlanFixBase):
             return None
 
     def task_change_status(self, id, status):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_task.changeStatus
-        """
         self.method = 'task.changeStatus'
         self.custom_scheme = []
         self.scheme = ['account',
@@ -157,9 +141,6 @@ class PlanFix(PlanFixBase):
             return None
 
     def task_add(self, *args, **kwargs):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_task.add
-        """
         self.method = "task.add"
         self.scheme = ['account',
                        'sid',
@@ -190,9 +171,6 @@ class PlanFix(PlanFixBase):
             return None
 
     def task_get(self, id, general=''):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_task.get
-        """
         self.method = "task.get"
         self.scheme = ['account',
                        'sid',
@@ -211,9 +189,6 @@ class PlanFix(PlanFixBase):
             return None
 
     def task_get_calc(self, id, general='', custom_data_id=''):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_task.get
-        """
         response = self.task_get(id, general)
         root = ElementTree.fromstring(response)
         custom_data = root.find('task').find('customData').findall('customValue')
@@ -222,9 +197,6 @@ class PlanFix(PlanFixBase):
                 return {int(value.text) for value in custom_value.findall('value')}
 
     def task_update(self, *args, **kwargs):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_task.update
-        """
         self.method = "task.update"
         self.scheme = ['account',
                        'sid',
@@ -249,8 +221,8 @@ class PlanFix(PlanFixBase):
                                  'endTimeIsSet',
                                  'endTime',
                                  {'customData': 'customValue'}, # customValue = [id, value]
-                                 ]
-                        }]
+                                 ]}
+                       ]
         try:
             response = ElementTree.fromstring(self.connect(**kwargs))
             return response.find('task').find("id").text
@@ -258,9 +230,6 @@ class PlanFix(PlanFixBase):
             return None
 
     def handbook_get_group_list(self, *args, **kwargs):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_handbook.getGroupList
-        """
         self.method = 'handbook.getGroupList'
         self.scheme = ['account', 'sid']
         params = {'account': self.account,
@@ -273,9 +242,6 @@ class PlanFix(PlanFixBase):
             return None
 
     def handbook_get_list(self, *args, **kwargs):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_handbook.getList
-        """
         self.method = 'handbook.getList'
         self.scheme = ['account',
                        'sid',
@@ -290,9 +256,6 @@ class PlanFix(PlanFixBase):
             return None
 
     def handbook_get_records(self, handbook, *args, **kwargs):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_handbook.getList
-        """
         self.method = 'handbook.getRecords'
         self.scheme = ['account',
                        'sid',
@@ -326,11 +289,7 @@ class PlanFix(PlanFixBase):
         except PlanfixError as e:
             return None
 
-
     def analitic_get_group_list(self):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_analitic.getGroupList
-        """
         self.method = 'analitic.getGroupList'
         self.scheme = {'account', 'sid'}
         params = {'account': self.account,
@@ -345,11 +304,7 @@ class PlanFix(PlanFixBase):
         except PlanfixError as e:
             return None
 
-
     def analitic_get_list(self, groupId):
-        """
-        https://planfix.ru/docs/%D0%9F%D0%BB%D0%B0%D0%BD%D0%A4%D0%B8%D0%BA%D1%81_API_analitic.getList
-        """
         self.method = 'analitic.getList'
         self.scheme = {'account', 'sid'}
         params = {'account': self.account,
@@ -362,5 +317,78 @@ class PlanFix(PlanFixBase):
             total = rt.attrib['totalCount']
 
             return [(item.find('id').text, item.find('name').text) for item in rt]
+        except PlanfixError as e:
+            return None
+
+    def action_add(self, *args, **kwargs):
+        self.method = 'action.add'
+        xml_values = {}
+        xml_values['@method'] = self.method
+        xml_values['account'] = self.account
+        xml_values['sid'] = self.sid
+
+        analitic = {}
+        analitic['id'] = kwargs.get('analiticId')
+        analitic['analiticData'] = {}
+        analitic['analiticData']['itemData'] = []
+
+        for a_data in kwargs.get('analitic_data'):
+            analitic['analiticData']['itemData'].append({
+                'fieldId': a_data['field_id'],
+                'value': a_data['value']
+            })
+
+        xml_values['action'] = {
+            'description': kwargs.get('description'),
+            'task': {'general': kwargs.get('taskGeneral')},
+            # 'task': {'id': kwargs.get('taskId')},
+            # {'contact': 'general'},
+            'taskNewStatus': kwargs.get('taskNewStatus'),
+            'notifiedList': {'user': kwargs.get('userIdList')},
+            # 'isHidden': kwargs.get('isHidden'),
+            # 'owner': {'id': kwargs.get('ownerId')},
+            # 'dateTime': kwargs.get('dateTime'),
+            'analitics': {'analitic':analitic}
+        }
+
+        try:
+            response = ElementTree.fromstring(self.connect_v2(xml_values, **kwargs))
+            rt = response.find('action')
+
+            return rt.find('id').text
+        except PlanfixError as e:
+            return None
+
+    def action_get_list(self, _id):
+        self.method = 'action.getList'
+        xml_values = {}
+        xml_values['@method'] = self.method
+        xml_values['account'] = self.account
+        xml_values['sid'] = self.sid
+
+        xml_values['task'] = {'general': _id}
+
+        try:
+            response = ElementTree.fromstring(self.connect_v2(xml_values, **kwargs))
+            rt = response.find('action')
+            xml_string = self.connect(**params)
+            res = xmltodict.parse(xml_string)
+            return res
+        except PlanfixError as e:
+            return None
+
+    def action_get(self, action_id):
+        self.method = 'action.get'
+        self.scheme = ['account',
+                       {'action': 'id'},
+                       'sid',
+                      ]
+        params = {'account': self.account,
+                  'action': action_id,
+                  'sid': self.sid,}
+        try:
+            xml_string = self.connect(**params)
+            res = xmltodict.parse(xml_string)
+            return res
         except PlanfixError as e:
             return None

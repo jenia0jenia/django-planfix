@@ -5,6 +5,8 @@ from hashlib import md5
 from xml.etree import ElementTree
 from django.core.cache import cache
 
+import xmltodict
+
 # class Cache(object):
 #     params = {}
 #
@@ -184,3 +186,23 @@ class PlanFixBase(object):
                 self.debug(msg)
             except TypeError as e:
                 print(e)
+
+    def connect_v2(self, xml_values, **kwargs):
+        if not 'sid' in xml_values and self.sid:
+            xml_values['sid'] = self.sid
+
+        xml_request = {}
+        xml_request['request'] = xml_values
+        body = xmltodict.unparse(xml_request, pretty=True)
+        data = body.encode('utf-8')
+        self.print_debug(data)
+
+        r = requests.post(self.host, data=data, auth=(self.api_key, ""))
+        content = r.content.decode()
+        self.print_debug(content)
+
+        if self.is_session_valid(content):
+            return content
+        elif self.method != 'auth.login':
+            self.auth(renew=True)
+            return self.connect_v2(xml_values, **kwargs)
