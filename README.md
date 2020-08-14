@@ -1,2 +1,2 @@
 # django-planfix
-Добавление задач и контакты в Planfix
+Python Api Planfix

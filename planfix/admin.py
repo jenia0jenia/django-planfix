@@ -8,3 +8,4 @@ from .models import PlanfixModel
 class PlanfixModelAdmin(admin.ModelAdmin):
     list_display = ['contact_id', 'task_id', 'user']
     list_display_links = ('user',)
+    search_fields = ['user']

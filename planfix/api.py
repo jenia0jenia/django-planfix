@@ -1,5 +1,5 @@
 from .classes import PlanFixBase, PlanfixError
-from .utils import parse_xml_recursively
+from .utils import print_parser
 from xml.etree import ElementTree
 from collections import OrderedDict
 

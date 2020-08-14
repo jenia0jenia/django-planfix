@@ -7,20 +7,20 @@ from django.core.cache import cache
 
 import xmltodict
 
-# class Cache(object):
-#     params = {}
-#
-#     def get(self,key):
-#         if key in self.params:
-#             return self.params[key]
-#         else:
-#             return None
-#
-#     def set(self,key,value,timeout):
-#         self.params[key] = value
-#
-#
-# cache = Cache()
+class Cache(object):
+    params = {}
+
+    def get(self,key):
+        if key in self.params:
+            return self.params[key]
+        else:
+            return None
+
+    def set(self,key,value,timeout):
+        self.params[key] = value
+
+
+cache = Cache()
 
 
 class PlanfixError(Exception):
