@@ -10,7 +10,7 @@ except ImportError:
 
 setup(
     name='django-planfix',
-    version='0.46',
+    version='0.47',
     description='Python Api Planfix',
     author='Mikhail Maltsev, jenia0jenia',
     author_email='drumsland@gmail.com, jenia0jenia@mail.ru',
