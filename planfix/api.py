@@ -170,6 +170,36 @@ class PlanFix(PlanFixBase):
         except PlanfixError as e:
             return None
 
+    # def task_add_v2(self, *args, **kwargs):
+    #     self.method = "task.add"
+    #     self.scheme = ['account',
+    #                    'sid',
+    #                    {'task': ['template',
+    #                              'title',
+    #                              'description',
+    #                              'importance',
+    #                              'status',
+    #                              {'owner': 'id'},
+    #                              'statusSet',
+    #                              'checkResult',
+    #                              {'project': 'id'},
+    #                              'startDateIsSet',
+    #                              'startDate',
+    #                              'startTimeIsSet',
+    #                              'startTime',
+    #                              'endDateIsSet',
+    #                              'endDate',
+    #                              'endTimeIsSet',
+    #                              'endTime',
+    #                              {'customData': 'customValue'}]
+    #                     }]
+
+    #     try:
+    #         response = ElementTree.fromstring(self.connect(**kwargs))
+    #         return response.find('task').find("id").text
+    #     except PlanfixError as e:
+    #         return None
+
     def task_get(self, id, general=''):
         self.method = "task.get"
         self.scheme = ['account',
@@ -188,13 +218,12 @@ class PlanFix(PlanFixBase):
         except PlanfixError as e:
             return None
 
-    def task_get_calc(self, id, general='', custom_data_id=''):
-        response = self.task_get(id, general)
-        root = ElementTree.fromstring(response)
+    def task_get_field_value(self, id, general='', custom_data_id=''):
+        root = ElementTree.fromstring(self.task_get(id, general))
         custom_data = root.find('task').find('customData').findall('customValue')
         for custom_value in custom_data:
             if custom_data_id == custom_value.find('field').find('id').text:
-                return {int(value.text) for value in custom_value.findall('value')}
+                return [int(value.text) for value in custom_value.findall('value')]
 
     def task_update(self, *args, **kwargs):
         self.method = "task.update"
@@ -226,6 +255,34 @@ class PlanFix(PlanFixBase):
         try:
             response = ElementTree.fromstring(self.connect(**kwargs))
             return response.find('task').find("id").text
+        except PlanfixError as e:
+            return None
+
+    def task_update_v2(self, *args, **kwargs):
+        self.method = "task.update"
+        xml_values = {}
+        xml_values['@method'] = self.method
+        xml_values['account'] = self.account
+        xml_values['sid'] = self.sid
+        xml_values['silent'] = "1"
+
+        task = {}
+        task['id'] = kwargs.get('taskId')
+        task['customData'] = {}
+        task['customData']['customValue'] = []
+
+        for custom_data in kwargs.get('custom_data'):
+            task['customData']['customValue'].append({
+                'id': custom_data['id'],
+                'value': custom_data['value'],
+            })
+
+        xml_values['task'] = task
+
+        try:
+            return self.connect_v2(xml_values, **kwargs)
+            # response = ElementTree.fromstring(self.connect_v2(xml_values, **kwargs))
+            # return response.find('task').find("id").text
         except PlanfixError as e:
             return None
 
@@ -340,21 +397,21 @@ class PlanFix(PlanFixBase):
 
         xml_values['action'] = {
             'description': kwargs.get('description'),
-            'task': {'general': kwargs.get('taskGeneral')},
-            # 'task': {'id': kwargs.get('taskId')},
+            # 'task': {'general': kwargs.get('taskGeneral')},
+            'task': {'id': kwargs.get('taskId')},
             # {'contact': 'general'},
             'taskNewStatus': kwargs.get('taskNewStatus'),
             'notifiedList': {'user': kwargs.get('userIdList')},
             # 'isHidden': kwargs.get('isHidden'),
             # 'owner': {'id': kwargs.get('ownerId')},
             # 'dateTime': kwargs.get('dateTime'),
-            'analitics': {'analitic':analitic}
+            'analitics': {'analitic': analitic}
         }
 
         try:
             response = ElementTree.fromstring(self.connect_v2(xml_values, **kwargs))
+            print(response)
             rt = response.find('action')
-
             return rt.find('id').text
         except PlanfixError as e:
             return None
