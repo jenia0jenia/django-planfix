@@ -7,22 +7,6 @@ from django.core.cache import cache
 
 import xmltodict
 
-class Cache(object):
-    params = {}
-
-    def get(self,key):
-        if key in self.params:
-            return self.params[key]
-        else:
-            return None
-
-    def set(self,key,value,timeout):
-        self.params[key] = value
-
-
-cache = Cache()
-
-
 class PlanfixError(Exception):
     """Exception raised for errors in the PLANFIX requests.
 
@@ -193,7 +177,7 @@ class PlanFixBase(object):
 
         xml_request = {}
         xml_request['request'] = xml_values
-        body = xmltodict.unparse(xml_request, pretty=True)
+        body = xmltodict.unparse(xml_request)
         data = body.encode('utf-8')
         self.print_debug(data)
 
