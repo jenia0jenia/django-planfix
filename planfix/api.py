@@ -161,7 +161,8 @@ class PlanFix(PlanFixBase):
                                  'endDate',
                                  'endTimeIsSet',
                                  'endTime',
-                                 {'customData': 'customValue'}]
+                                 # {'customData': 'customValue'}
+                                ]
                         }]
 
         try:
