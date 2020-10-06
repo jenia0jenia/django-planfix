@@ -201,26 +201,28 @@ class PlanFix(PlanFixBase):
     #     except PlanfixError as e:
     #         return None
 
-    def task_get(self, id, general=''):
+    def task_get(self, id):
         self.method = "task.get"
         self.scheme = ['account',
                        'sid',
-                       {'task': ['id', 'general']}
+                       {'task': ['id']}
                        ]
         params = {'account': self.account,
             'sid': self.sid,
-            'id': id,
-            'general': general}
+            'id': id}
         try:
-            # response = ElementTree.fromstring(self.connect(**params))
-            # return response.find('task').find("id").text
             response = self.connect(**params)
             return response
         except PlanfixError as e:
-            return None
+            return e
 
-    def task_get_field_value(self, id, general='', custom_data_id=''):
-        root = ElementTree.fromstring(self.task_get(id, general))
+    def task_get_field_value(self, id, custom_data_id):
+        task_get_res = self.task_get(id)
+
+        if isinstance(task_get_res, PlanfixError):
+            return task_get_res
+
+        root = ElementTree.fromstring(task_get_res)
         custom_data = root.find('task').find('customData').findall('customValue')
         for custom_value in custom_data:
             if custom_data_id == custom_value.find('field').find('id').text:
